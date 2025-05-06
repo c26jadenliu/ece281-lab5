@@ -190,6 +190,10 @@ begin
 	
 	--state
 	led(3 downto 0) <= w_cycle;
+	--led(3) <= w_cycle(3);
+	--led(2) <= w_cycle(1);
+	--led(1) <= w_cycle(2);
+	--led(0) <= w_cycle(0);
 	--NZCV ALU flags
 	led(15 downto 12) <= w_flags when w_cycle = "0010" else "0000";
 	
