@@ -78,22 +78,22 @@ architecture top_basys3_arch of top_basys3 is
 	end component TDM4;
 
     --convert 8b bin to decimal w/ neg
-    component twoscomp_decimal is
+    component twos_comp is
 	Port (
-	    i_binary: in std_logic_vector(7 downto 0);
-        o_negative: out std_logic;
-        o_hundreds: out std_logic_vector(3 downto 0);
+	    i_bin: in std_logic_vector(7 downto 0);
+        o_sign: out std_logic;
+        o_hund: out std_logic_vector(3 downto 0);
         o_tens: out std_logic_vector(3 downto 0);
         o_ones: out std_logic_vector(3 downto 0)
     );
-    end component twoscomp_decimal;
+    end component twos_comp;
     
-    component sevenSegDecoder is
+    component sevenseg_decoder is
     Port (
-        i_D : in STD_LOGIC_VECTOR (3 downto 0);
-        o_S : out STD_LOGIC_VECTOR (6 downto 0)
+        i_Hex : in STD_LOGIC_VECTOR (3 downto 0);
+        o_seg_n : out STD_LOGIC_VECTOR (6 downto 0)
     );
-    end component sevenSegDecoder;
+    end component sevenseg_decoder;
     
     component controller_fsm is
     Port (
@@ -149,19 +149,19 @@ begin
         o_sel => w_an
     );
     
-    twosComp_inst : twoscomp_decimal
+    twosComp_inst : twos_comp
     port map (
-        i_binary => w_val,
-        o_negative => w_neg,
-        o_hundreds => w_hund,
+        i_bin => w_val,
+        o_sign => w_neg,
+        o_hund => w_hund,
         o_tens => w_tens,
         o_ones => w_ones
     );
     
-    sevenSeg_inst :   sevenSegDecoder
+    sevenSeg_inst :   sevenseg_decoder 
     port map (
-        i_D => w_tdm,
-        o_S => seg
+        i_Hex => w_tdm,
+        o_seg_n => seg
 	);
 	
 	controller_inst    :   controller_fsm
