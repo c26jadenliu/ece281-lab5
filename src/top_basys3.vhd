@@ -191,7 +191,7 @@ begin
 	--state
 	led(3 downto 0) <= w_cycle;
 	--NZCV ALU flags
-	led(15 downto 12) <= w_flags when w_cycle = "0010" else "000";
+	led(15 downto 12) <= w_flags when w_cycle = "0010" else "0000";
 	
 	-- not used
 	led(11 downto 4) <= (others => '0');
