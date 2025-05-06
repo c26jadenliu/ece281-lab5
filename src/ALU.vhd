@@ -66,7 +66,10 @@ begin
                     (others => '0') when others;
 	-- flags
 	w_zero <= '1' when (w_result = "00000000") else '0'; -- zero flag 
-	w_carry <= extended(8) when (i_op = "000" or i_op = "001") else '0'; 
+	w_carry <= '1' when i_op = "000" and (unsigned(i_A) + unsigned (i_B)) > "11111111" else
+	           '1' when i_op = "001" and (unsigned(i_A) < unsigned(i_B)) else
+	           '0';
+	 
 	w_neg <= w_result(7);
 	
 	
