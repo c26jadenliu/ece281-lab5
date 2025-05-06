@@ -54,7 +54,7 @@ begin
     with i_op select
     --add, sub, and, or, according to provided opcodes
         w_result <= std_logic_vector(signed(i_A) + signed (i_B)) when "000",
-                    std_logic_vector(signed(i_B) - signed(i_B)) when "001",
+                    std_logic_vector(signed(i_A) - signed(i_B)) when "001",
                     i_A and i_B when "010",
                     i_A or i_B when "011",
                     (others=>'0') when others;
