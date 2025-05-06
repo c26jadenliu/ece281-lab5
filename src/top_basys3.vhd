@@ -50,8 +50,8 @@ architecture top_basys3_arch of top_basys3 is
         i_A :   in std_logic_vector (7 downto 0);
         i_B :   in std_logic_vector (7 downto 0);
         i_op    :   in std_logic_vector (2 downto 0);
-        o_results   :   out std_logic_vector (7 downto 0);
-        o_flags     :   out std_logic_vector (2 downto 0)
+        o_result   :   out std_logic_vector (7 downto 0);
+        o_flags     :   out std_logic_vector (3 downto 0)
     );
     end component ALU;
     
@@ -104,9 +104,9 @@ architecture top_basys3_arch of top_basys3 is
     end component controller_fsm;
     
     signal w_A, w_B, w_results, w_val, w_neg_display    :   std_logic_vector (7 downto 0);
-    signal w_op, w_flags :   std_logic_vector (2 downto 0);
+    signal w_op :   std_logic_vector (2 downto 0);
     signal w_tdm, w_an    :   std_logic_vector (3 downto 0);
-    
+    signal w_flags : std_logic_vector (3 downto 0);
     signal w_cycle  :   std_logic_vector (3 downto 0);
     signal f_Q, f_Q_next    :   std_logic_vector (3 downto 0);
     
@@ -125,7 +125,7 @@ begin
         i_A => w_A,
         i_B => w_B,
         i_op => w_op,
-        o_results => w_results,
+        o_result => w_results,
         o_flags => w_flags
     );
     
