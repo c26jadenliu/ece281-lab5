@@ -45,15 +45,168 @@ end top_basys3;
 architecture top_basys3_arch of top_basys3 is 
   
 	-- declare components and signals
+	component ALU is
+    Port (
+        i_A :   in std_logic_vector (7 downto 0);
+        i_B :   in std_logic_vector (7 downto 0);
+        i_op    :   in std_logic_vector (2 downto 0);
+        o_results   :   out std_logic_vector (7 downto 0);
+        o_flags     :   out std_logic_vector (2 downto 0)
+    );
+    end component ALU;
+    
+    component clock_divider is 
+    generic ( constant k_DIV : natural := 2	);
+	port ( 	i_clk    : in std_logic;		   
+			i_reset  : in std_logic;		   
+			o_clk    : out std_logic --slower
+	); 
+	end component clock_divider;
+	
+	component TDM4 is
+    generic ( constant k_WIDTH : natural  := 4); -- 4 bit input/output
+    Port (
+        i_clk		: in  STD_LOGIC;
+        i_reset		: in  STD_LOGIC; -- asynchronous
+        i_D3 		: in  STD_LOGIC_VECTOR (k_WIDTH - 1 downto 0);
+		i_D2 		: in  STD_LOGIC_VECTOR (k_WIDTH - 1 downto 0);
+		i_D1 		: in  STD_LOGIC_VECTOR (k_WIDTH - 1 downto 0);
+		i_D0 		: in  STD_LOGIC_VECTOR (k_WIDTH - 1 downto 0);
+		o_data		: out STD_LOGIC_VECTOR (k_WIDTH - 1 downto 0); -- dig
+		o_sel		: out STD_LOGIC_VECTOR (3 downto 0)	-- active anode
+	);
+	end component TDM4;
 
-  
+    --convert 8b bin to decimal w/ neg
+    component twoscomp_decimal is
+	Port (
+	    i_binary: in std_logic_vector(7 downto 0);
+        o_negative: out std_logic;
+        o_hundreds: out std_logic_vector(3 downto 0);
+        o_tens: out std_logic_vector(3 downto 0);
+        o_ones: out std_logic_vector(3 downto 0)
+    );
+    end component twoscomp_decimal;
+    
+    component sevenSegDecoder is
+    Port (
+        i_D : in STD_LOGIC_VECTOR (3 downto 0);
+        o_S : out STD_LOGIC_VECTOR (6 downto 0)
+    );
+    end component sevenSegDecoder;
+    
+    component controller_fsm is
+    Port (
+        i_adv   :   in std_logic;
+        i_reset :   in std_logic;
+        o_cycle :   out std_logic_vector (3 downto 0)       
+    );
+    end component controller_fsm;
+    
+    signal w_A, w_B, w_results, w_val, w_neg_display    :   std_logic_vector (7 downto 0);
+    signal w_op, w_flags :   std_logic_vector (2 downto 0);
+    signal w_tdm, w_an    :   std_logic_vector (3 downto 0);
+    
+    signal w_cycle  :   std_logic_vector (3 downto 0);
+    signal f_Q, f_Q_next    :   std_logic_vector (3 downto 0);
+    
+    signal w_neg   :   std_logic;
+    signal w_hund : std_logic_vector (3 downto 0);
+    signal w_tens : std_logic_vector (3 downto 0);
+    signal w_ones : std_logic_vector (3 downto 0);
+    signal w_sevSegSign   :  std_logic_vector (3 downto 0);
+
+    signal w_clk_tdm    :   std_logic;
+    
 begin
 	-- PORT MAPS ----------------------------------------
-
+    ALU_inst:ALU
+    port map (
+        i_A => w_A,
+        i_B => w_B,
+        i_op => w_op,
+        o_results => w_results,
+        o_flags => w_flags
+    );
+    
+    clk_TDM_inst    :   clock_divider
+    generic map ( k_DIV => 100000 ) -- 2hz
+    port map (
+        i_clk => clk,
+        i_reset => btnU,
+        o_clk => w_clk_tdm
+    );
+    
+    TDM_inst    :   TDM4
+    port map (
+        i_clk => w_clk_tdm,
+        i_reset => btnU,
+        i_D3 => w_sevSegSign,
+        i_D2 => w_hund,
+        i_D1 => w_tens,
+        i_D0 => w_ones,
+        o_data => w_tdm,
+        o_sel => w_an
+    );
+    
+    twosComp_inst : twoscomp_decimal
+    port map (
+        i_binary => w_val,
+        o_negative => w_neg,
+        o_hundreds => w_hund,
+        o_tens => w_tens,
+        o_ones => w_ones
+    );
+    
+    sevenSeg_inst :   sevenSegDecoder
+    port map (
+        i_D => w_tdm,
+        o_S => seg
+	);
 	
+	controller_inst    :   controller_fsm
+	port map (
+	   i_adv => btnC,
+	   i_reset => btnU,
+	   o_cycle => w_cycle
+    );
+   
 	
 	-- CONCURRENT STATEMENTS ----------------------------
+	an <= "1111" when (w_cycle = "0001") else -- clear
+	       w_an;
+	       
+	w_op <= sw(2 downto 0);
+	       
+	-- display baed on state       
+	w_val <= w_A when (w_cycle = "1000") else
+	         w_B when (w_cycle = "0100") else
+	         w_results when (w_cycle = "0010") else
+	         (others => '0'); --reset
+	         
+	w_sevSegSign <= x"F" when (w_neg = '1') else x"E";
+	                
+	w_op <= sw(2 downto 0);
 	
+	--state
+	led(3 downto 0) <= w_cycle;
+	--NZCV ALU flags
+	led(15 downto 12) <= w_flags when w_cycle = "0010" else "000";
 	
+	-- not used
+	led(11 downto 4) <= (others => '0');
 	
+		reg_process: process(clk)
+	begin
+	
+	   if (rising_edge(clk)) then 
+            if (w_cycle = "0001") then
+                w_A <= sw (7 downto 0);
+            elsif (w_cycle = "1000") then
+                w_B <= sw (7 downto 0);
+            end if;
+        end if;
+        
+	end process reg_process;
+
 end top_basys3_arch;

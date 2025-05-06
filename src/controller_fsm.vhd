@@ -38,8 +38,22 @@ entity controller_fsm is
 end controller_fsm;
 
 architecture FSM of controller_fsm is
+    component controller_fsm is
+    Port (
+        i_adv   :   in std_logic;
+        i_clk   :   in std_logic;
+        i_reset :   in std_logic;
+        o_cycle :   out std_logic_vector (3 downto 0)       
+    );
+    end component controller_fsm;
 
 begin
-
+    controller_inst:controller_fsm
+	port map (
+	   i_adv => btnC,
+	   i_clk => clk,
+	   i_reset => btnU,
+	   o_cycle => w_cycle
+    );
 
 end FSM;
