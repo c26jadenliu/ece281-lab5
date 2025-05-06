@@ -1,14 +1,11 @@
 ----------------------------------------------------------------------------------
--- Company: 
--- Engineer: 
--- 
 -- Create Date: 04/18/2025 02:42:49 PM
--- Design Name: 
+-- Design Name: Basic CPU
 -- Module Name: controller_fsm - FSM
--- Project Name: 
+-- Project Name: Lab 5 
 -- Target Devices: 
 -- Tool Versions: 
--- Description: 
+-- Description: controller fsm for basic cpu
 -- 
 -- Dependencies: 
 -- 
@@ -17,14 +14,13 @@
 -- Additional Comments:
 -- 
 ----------------------------------------------------------------------------------
-
-
+----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
---use IEEE.NUMERIC_STD.ALL;
+use IEEE.NUMERIC_STD.ALL;
 
 -- Uncomment the following library declaration if instantiating
 -- any Xilinx leaf cells in this code.
@@ -38,22 +34,32 @@ entity controller_fsm is
 end controller_fsm;
 
 architecture FSM of controller_fsm is
-    component controller_fsm is
-    Port (
-        i_adv   :   in std_logic;
-        i_clk   :   in std_logic;
-        i_reset :   in std_logic;
-        o_cycle :   out std_logic_vector (3 downto 0)       
-    );
-    end component controller_fsm;
+    signal current_state, next_state : std_logic_vector(3 downto 0);
 
 begin
-    controller_inst:controller_fsm
-	port map (
-	   i_adv => btnC,
-	   i_clk => clk,
-	   i_reset => btnU,
-	   o_cycle => w_cycle
-    );
-
+    process(i_adv,i_reset)
+    begin
+        if i_reset = '1' then
+            current_state<="0001";
+        elsif rising_edge(i_adv)
+        then
+            current_State <= next_state;
+            
+        end if;
+    end process;
+    
+    process(current_state)
+    begin
+        case current_State is
+            when "1000" => next_state <= "0100";
+            when "0100" => next_state <= "0010";
+            when "0010" => next_state <= "0001";
+            when "0001" => next_state <= "1000";
+            when others => next_state <= "0001";
+        end case;
+        
+    end process;
+    
+    o_cycle <= current_state;
+    
 end FSM;
